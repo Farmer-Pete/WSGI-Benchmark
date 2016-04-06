@@ -10,4 +10,4 @@ THREAD_COUNT=2
 # bare uWSGI (without nginx)
 # http://serverfault.com/questions/590819/why-do-i-need-nginx-when-i-have-uwsgi
 
-uwsgi --http :9808 --wsgi-file app.py --master --processes "$PROCESSOR_COUNT" --threads "$THREAD_COUNT"
+uwsgi --http :9808 --plugin python2 --wsgi-file app.py --processes "$PROCESSOR_COUNT" --threads "$THREAD_COUNT" --disable-logging
