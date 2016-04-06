@@ -21,6 +21,12 @@ class Parser(object):
 
     RESULTS = defaultdict(Results)
     DIGITS_RE = re.compile(r'\d+')
+    LATENCY_RE = re.compile(r'([\d\.]+)(\w+)')
+    LATENCY_MULTIPLIERS = {
+        'us': 0.001,
+        'ms': 1.0,
+        's': 1000.0
+    }
 
     def process(self, directory):
         for fileName in sorted(os.listdir(directory)):
@@ -45,7 +51,8 @@ class Parser(object):
         for line in content:
             parts = [ part for part in line.split(' ') if part ]
             if parts[0] == 'Latency':
-                self.RESULTS[directory].LATENCIES[server][connections] = float(parts[1][:-2])
+                digits, unit = self.LATENCY_RE.match(parts[1]).groups()
+                self.RESULTS[directory].LATENCIES[server][connections] = float(digits) * self.LATENCY_MULTIPLIERS[unit]
             elif 'Requests' in parts[0]:
                 self.RESULTS[directory].REQUESTS[server][connections] = float(parts[1])
             elif 'Socket' == parts[0]:
@@ -86,11 +93,14 @@ class Output(object):
         return ','.join(str(cell) for cell in row)
 
     def _best(self, data, metric, server, count):
+        # Sort the vaules, removing the extremes
         values = sorted(
             getattr(data[directory], metric)[server].get(count, 0)
             for directory in data
-        )
-        return values[len(values)/2]
+        )[1:-1]
+
+        # Average the remaining values
+        return sum(values)/len(values)
 
     def _requests(self, results):
         print()
